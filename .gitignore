@@ -1,0 +1,33 @@
+# Ignore virtual environments
+clean_env/
+de_env/
+
+# Ignore database
+warehouse.duckdb
+
+# Ignore logs
+logs/
+
+# Ignore virtual environments
+clean_env/
+de_env/
+
+# Ignore database
+warehouse.duckdb
+
+# Ignore logs
+logs/
+
+# Ignore jupyter cache
+notebooks/.ipynb_checkpoints/
+
+# Ignore dbt build artifacts
+learning_dbt/target/
+learning_dbt/logs/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Prefect cache
+.orchestration/
