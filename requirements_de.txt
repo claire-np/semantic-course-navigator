@@ -1,0 +1,4 @@
+duckdb
+dbt-core
+dbt-duckdb
+prefect
