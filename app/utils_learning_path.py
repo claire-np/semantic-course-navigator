@@ -19,7 +19,7 @@ df = pd.read_csv("unified_courses_v1.csv")
 embeddings = np.load("course_embeddings.npy")
 index = faiss.read_index("faiss_index.bin")
 
-model = SentenceTransformer("clairenp/miniLM_finetuned_udemy")
+model = SentenceTransformer("model/miniLM_finetuned_udemy")
 
 
 # Role definitions and skill stages

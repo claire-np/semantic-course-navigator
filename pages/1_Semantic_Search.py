@@ -107,7 +107,7 @@ def load_search_engine():
     df = enrich_courses_with_search_text(df)
 
     from sentence_transformers import SentenceTransformer
-    embed_model = SentenceTransformer("clairenp/miniLM_finetuned_udemy")
+    embed_model = SentenceTransformer("model/miniLM_finetuned_udemy")
 
 
     if os.path.exists(emb_path) and os.path.exists(index_path):
