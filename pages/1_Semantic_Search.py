@@ -106,12 +106,9 @@ def load_search_engine():
     df = pd.read_csv(csv_path)
     df = enrich_courses_with_search_text(df)
 
-    model_path = os.path.join(ROOT_DIR, "model", "miniLM_finetuned_udemy")
-    embed_model = (
-        SentenceTransformer(model_path)
-        if os.path.exists(model_path)
-        else SentenceTransformer("all-MiniLM-L6-v2")
-    )
+    from sentence_transformers import SentenceTransformer
+    embed_model = SentenceTransformer("clairenp/miniLM_finetuned_udemy")
+
 
     if os.path.exists(emb_path) and os.path.exists(index_path):
         embeddings = np.load(emb_path)

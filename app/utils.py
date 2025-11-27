@@ -33,7 +33,7 @@ index = faiss.read_index(str(INDEX_PATH))
 
 # Sentence transformer model
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer("clairenp/miniLM_finetuned_udemy")
 
 
 #1. Domain detection with anchors + course-topic
