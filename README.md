@@ -1,168 +1,303 @@
-# 🚀 Semantic Course Navigator  
-### End-to-End Semantic Retrieval, Learning Path Generation & Modern Data Stack Integration
+# UdemyCourseAtlas Semantic Engine  
+#### A semantic search and learning-path engine powered by modern NLP, retrieval methods, and data engineering workflows.
 
-This project transforms a **raw Udemy Business marketplace dump** into a **robust, multi-layer retrieval system**, with a complete pipeline from:
+I previously worked at Udemy, where I gained exposure to large-scale course discovery systems. Inspired by Udemy’s new AI-driven learning paths, I built this independent project to explore semantic search and learning-path generation using open-source tools.
 
-`Ingestion → Transformation → ML Embeddings → FAISS Indexing → Semantic Retrieval → Learning Path Engine → Streamlit Application`
+This system applies a full-stack semantic retrieval architecture that combines dbt transformations, Prefect orchestration, SBERT embeddings, FAISS indexing, hybrid ranking, skill-based learning path generation, and a Streamlit application.
 
-The system unifies **NLP embeddings**, **hybrid information retrieval**, **skill-based curriculum generation**, and a modern **Data Engineering + Orchestration + Search Architecture** behind a multi-page UI.
-
----
-
-## 📸 Demo Screenshots
-
-### **Semantic Search Interface**
-
-### **Learning Path Generator**
-
----
-
-## 🏗️ System Architecture Diagram
+It processes a raw Udemy Business course export and converts it into a dbt-modeled, multi-layer retrieval platform spanning: Ingestion → Transformation → Embedding & Indexing → Hybrid Retrieval → Learning Path Engine → Application UI.
 
 
 ---
+
+## 🖥️ Demo Preview
+
+Representative screenshots demonstrating both the **Semantic Retrieval Engine** and the **Learning Path Generator**.  
+These images highlight the core functionality, while the full interactive experience is available inside the application.
+
+#### Semantic Retrieval Engine  
+Hybrid semantic search combining SBERT embeddings, BM25 lexical scoring, domain/skill boosting, and optional cross-encoder reranking.
+
+<p align="center">
+  <img src="assets/demo/search_cloud.jpg" width="88%">
+   <br>
+  <em>Figure 1. Semantic search results for the query “data engineer with aws”. Domain detected: Cloud & DevOps (confidence 0.92).</em>
+</p>
+    
+#### Learning Path Generator — Data Engineer (Stage 1 Preview)
+
+A curated, skill-based roadmap generated from semantic retrieval, course clustering, and ranking logic.  
+Stage 1 focuses on Python foundations and SQL essentials for modern data engineering roles.
+
+<p align="center">
+  <img src="assets/demo/de_foundations_part1.jpg" width="88%">
+   <br>
+  <em>Figure 2. Stage 1.1 of the Data Engineer learning path.</em>
+</p>
+
+
+---
+
 
 # 1. System Architecture Overview
 
-A production-oriented, pipeline-first design consistent with modern DS/ML systems.
+<p align="center">
+  <img width="321" height="711" alt="udemycourseatlas_architecture1" src="https://github.com/user-attachments/assets/8553f11d-6c04-4ca0-8197-25142fc2c7e4" />
+   <br>
+  <em>Figure 3. High-level architecture of the UdemyCourseAtlas Semantic Engine.</em>
+</p>
+
+## **Six-Core Layers**
 
 ---
 
-## **1 — Data Transformation (dbt Project + Local Warehouse)**  
-`learning_dbt/`
+## **Layer 1 — Data Transformation (dbt Project)**  
+`/learning_dbt/`
 
-- Raw input: `raw_marketplace.csv`
-- Transformations:
-  - Schema normalization & typing
-  - Text cleaning & NA handling
-  - Category/topic normalization
-  - Derived fields (`search_text`, `domain_text`)
-- Output:
-  - `unified_courses_v1.csv` — **analytics-ready model stored in a local warehouse**
+Implements a **local warehouse-style transformation layer** using dbt and DuckDB.
 
-Implements the **Medallion Architecture (Bronze → Silver → Gold)** for course data.
+**Key responsibilities:**
 
----
+- Normalize schema  
+- Clean and standardize text fields  
+- Cast types & handle missing values  
+- Derive semantic fields:
+  - `embedding_text`
+  - `search_text`
+  - `domain_text`
 
-## **2 — Orchestration (Prefect Pipelines)**  
-`orchestration/prefect/`
-
-Automates the entire lifecycle:
-
-- dbt run → validate → export
-- Batch embedding inference
-- FAISS index build & persistence
-- Scheduled refreshes & observability
-
-Ensures full reproducibility and identity of pipelines.
+**Outputs:**  
+`unified_courses_v1.csv` — analytics-ready, warehouse-modeled dataset.
 
 ---
 
-## **3 — ML / Search Engine Layer**  
-`model/` + `search_engine/`
+## **Layer 2 — Embedding Layer (Sentence Transformers)**  
+Notebook: `02_embedding_faiss_and_learning_path.ipynb`
 
-### Components
-- MiniLM SBERT encoder (`all-MiniLM-L6-v2`)
-- Fine-tuned model for Udemy domain
-- FAISS `IndexFlatIP` (cosine similarity)
-- IDF-weighted lexical score
-- Domain anchors to boost relevance (Data, Python, Cloud, PM, Finance)
-- Popularity and metadata normalization
+- Model: **SBERT MiniLM (all-MiniLM-L6-v2)**
+- Batch inference: 26k+ courses, batch size 64
+- Embedding dimension: 384  
+- Exported artifacts:
+  - `course_embeddings.npy`
+  - Fine-tuned model support (HuggingFace-ready)
 
-### Artifacts
-`unified_courses_v1.csv`
-`course_embeddings.npy`
-`faiss_index.bin`
-
-Retrieval latency: **< 10 ms / query** on CPU.
+**Goal:** Convert each course into dense semantic vectors for retrieval.
 
 ---
 
-## **4 — Learning Path Engine**  
-`app/utils_learning_path.py`
+## **Layer 3 — Indexing Layer (FAISS Vector Store)**  
 
-Generates 4-stage role-based upskilling paths:
+- FAISS IndexFlatIP (cosine similarity)
+- Memory-mapped binary index:
+  - `faiss_index.bin`
+- <10ms retrieval latency
+- Persistent + reloadable in the Streamlit app
 
-- Foundations  
-- Core Skills  
-- Specialization  
-- Portfolio & Certification  
-
-Mechanisms:
-
-- Role ontology (DA, BI, DS, DE, PM, DevOps, AI Engineer…)
-- Hybrid search for each skill
-- Select top-5 courses per skill
-- Output: structured JSON-like dict → rendered in UI
+**Goal:** Enable high-speed, scalable semantic search over the catalog.
 
 ---
 
-## **5 — Streamlit Application Layer**  
-`app/` + `pages/`
+## **Layer 4 — Hybrid Retrieval Engine (Python)**  
+Folder: `/search_engine/`
 
-Two major modules:
+A custom **hybrid search engine** combining:
 
-### **1. Semantic Search Explorer**
-- Fast vector search + hybrid ranking
-- Domain detection + scoring breakdown
-- Modern UI & CSS styling
+#### **1. Semantic Vector Search (FAISS + SBERT)**
+#### **2. Keyword Lexical Scoring** (idf-weighted)
+#### **3. Domain Anchor Reweighting**  
+(e.g., Python, Data Science, Cloud, PM, Finance)
 
-### **2. Personalized Learning Path Generator**
-- Auto-curated upskilling paths
-- Expandable skill blocks
-- Instructor, rating, enrollment metadata
+#### **4. Metadata Signals**
+- Category match  
+- Subcategory match  
+- Popularity normalization (log enrollments)
 
-Includes:
+#### **5. Score Fusion**
+Weighted hybrid score → ranking → deduplication
 
+**Output:**  
+Clean, ranked course recommendations for any natural-language query.
+
+---
+
+## **Layer 5 — Learning Path Engine (Skill Graph + Retrieval)**  
+File: `app/utils_learning_path.py`
+
+Implements a **4-stage role-based curriculum generator**:
+
+1. **Foundations**  
+2. **Core Skills**  
+3. **Specialization**  
+4. **Portfolio & Certification**
+
+**Supported Roles:**  
+Data Analyst, BI Analyst, Data Scientist, AI Engineer, DevOps, Cloud, Product Manager, Cybersecurity, Full-Stack, etc.
+
+For each skill:
+
+- Run hybrid search  
+- Select top-5 high-quality courses  
+- Return JSON-like structure rendered in UI
+
+---
+
+## **Layer 6 — Application Layer (Streamlit UI)**  
+Folder: `/app/`
+
+A polished, multi-page Streamlit application featuring:
+
+- Page 1: **Semantic Search Explorer**  
+- Page 2: **Learning Path Generator**
 - Cached artifact loading (`st.cache_resource`)
-- Defensive fallbacks for empty searches
-- Modular, maintainable UI
+- Custom CSS theme and gradient UI styling
+- Course cards, ranking tables, expandable sections
+
+**Goal:** Provide an interactive, production-like interface.
 
 ---
 
 # 2. Repository Structure
 
-....
-
+```
+semantic-course-navigator/
+│
+├── app/
+│   ├── app.py               # Main Streamlit entry point
+│   ├── pages/
+│   ├── utils.py             # Hybrid retrieval engine
+│   └── utils_learning_path.py
+│
+├── learning_dbt/            # dbt project for data modeling
+│
+├── orchestration/prefect/   # Prefect workflow orchestration
+│
+├── search_engine/
+│   └── search_engine_v2.py
+│
+├── notebooks/
+│   ├── 01_topic_search.ipynb
+│   └── 02_embedding_faiss_and_learning_path.ipynb
+│
+├── model/
+│   └── miniLM_finetuned_udemy/  # Optional fine-tuned SBERT
+│
+├── data/
+│   ├── unified_courses_v1.csv
+│   ├── course_embeddings.npy
+│   └── faiss_index.bin
+├── assets/
+│   └── demo/                # Demo screenshots for README
+├── requirements.txt
+├── requirements_de.txt      # DE + Prefect + dbt dependencies
+├── README.md
+└── .gitignore
+```
 
 ---
 
 # 3. Technical Highlights
 
-### **NLP / ML**
-- SBERT MiniLM encoder  
-- Domain-specific fine-tuning  
-- Batch inference pipeline  
-- Cosine similarity search  
-- Hybrid scoring function
+## **A. NLP & Embeddings**
+- SBERT MiniLM (all-MiniLM-L6-v2)
+- Embedding inference over 26k+ items
+- Fine-tuning ready (HuggingFace-compatible)
+- Cosine similarity retrieval
 
-### **Information Retrieval**
-- FAISS vector index  
-- IDF lexical weighting  
-- Domain anchor boosting  
-- Category/subcategory signal  
-- Popularity normalization  
+## **B. Information Retrieval**
+- FAISS IndexFlatIP (vector search)
+- Hybrid scoring: semantic + lexical + metadata
+- Domain reweighting via anchor embeddings
+- Deduplicated, ranked results
 
-### **Data Engineering**
-- dbt transformations  
-- Local warehouse modeling (DuckDB-like workflow)  
-- Prefect orchestration  
-- Reproducible, versioned artifacts  
+## **C. Data Engineering**
+- dbt Warehouse Modeling (DuckDB)
+- Text normalization & schema unification
+- Feature engineering (embedding_text, search_text)
+- Exported reproducible artifacts
 
-### **Learning Path Generation**
-- 4-phase roadmap logic  
-- Skill → top-5 course retrieval  
-- Structured curriculum output  
+## **D. Orchestration & MLOps**
+- Prefect workflow orchestration  
+- Version-controlled pipelines  
+- Caching, reproducibility, environment pinning  
+- HuggingFace model hosting (optional)
 
-### **Application Layer**
-- Streamlit multi-page design  
-- Cached artifact loading  
-- Scalable, modular utilities  
+## **E. Application Layer**
+- Streamlit multi-page UI  
+- Embedding + FAISS lazy loading  
+- Custom UI components  
+- Easily deployable app
 
 ---
 
-# 4. Quickstart
+# 4. Quickstart (Local Development)
 
-....
+## **1. Install dependencies**
+```bash
+pip install -r requirements.txt
+```
 
+## **2. Run the App**
+```bash
+streamlit run app/app.py
+```
+
+Artifacts automatically load:
+
+- `unified_courses_v1.csv`
+- `course_embeddings.npy`
+- `faiss_index.bin`
+
+> Optional: dbt models and Prefect flows are included for the data engineering pipeline, but not required to run the Streamlit application.
+
+---
+
+# 5. Future Works & Next Steps
+
+### **1. Semantic Layer Integration**
+Add a MetricFlow semantic layer for AI-driven metric queries  
+(e.g., enrollment_conversion_rate, popularity_momentum).
+
+### **2. Cloud Vector DB Migration**
+Move embeddings + FAISS to:
+- Pinecone  
+- Weaviate  
+- Qdrant  
+for scalable, distributed semantic search.
+
+### **3. Cross-Encoder Re-Ranking**
+Re-rank FAISS candidates with:
+`cross-encoder/ms-marco-MiniLM-L-6-v2`
+
+### **4. User Feedback Loop**
+Collect "Was this helpful?" signals in Streamlit →  
+Reinforcement Learning tuning for skills/path recommendations.
+
+### **5. Observability & Monitoring**
+Prefect logging, dbt test dashboards, latency monitoring, data quality KPIs.
+
+---
+
+# 6. Summary
+
+**UdemyCourseAtlas Semantic Engine** is an end-to-end semantic retrieval and curriculum intelligence system combining:
+
+- SBERT embeddings (fine-tuned ready)
+- FAISS vector indexing
+- Hybrid scoring & metadata-aware ranking
+- dbt transformations + Prefect workflows
+- Skill-based curriculum generator
+- Streamlit UI for semantic exploration & personalized learning paths
+
+Designed for scalable course search and personalized upskilling recommendations.
+
+---
+
+## Author
+
+**Linh Phuong Nguyen (Claire Nguyen)**  
+
+This project reflects ongoing work in applying modern NLP, retrieval systems, and data engineering practices to real educational challenges.  
+By rebuilding a full semantic search and learning-path engine from the ground up—using open-source tools, production-ready pipelines, and modular system design—it demonstrates a practical approach to improving how learners discover content and navigate skill development.
+
+The repository is shared openly to support others exploring EdTech, semantic search, or curriculum intelligence systems.  
 
